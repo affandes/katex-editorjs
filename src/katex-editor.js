@@ -32,6 +32,8 @@ export default class KatexEditor {
             delimiter: '$$'
         };
         this.wrapper = null;
+        this.editor = null;
+        this.viewer = null;
 
         Object.assign(this.data, data);
         Object.assign(this.config, config);
@@ -39,53 +41,75 @@ export default class KatexEditor {
 
     render() {
 
-        this._setupView();
+        this._setup();
 
         return this.wrapper
 
     }
 
-    _setupView() {
+    _setup() {
+
         // Setup wrapper
-        this.wrapper = document.createElement('div');
-        this.wrapper.classList.add(KatexEditor.cssClass.wrapper);
+        this._createWrapper();
 
-        // Setup input
-        const input = this._createInput();
+        // Setup editor
+        this._createEditor();
 
-        // Setup ouput
-        const output = document.createElement('div');
-        output.innerHTML = 'Output: ' + this.data.tex;
+        // Setup viewer
+        this._createViewer();
 
         this.wrapper.innerHTML = '';
-        this.wrapper.appendChild(input);
-        this.wrapper.appendChild(output);
+        this.wrapper.appendChild(this.editor);
+        this.wrapper.appendChild(this.viewer);
     }
 
-    _createInput() {
-        const input = document.createElement('div');
-        input.contentEditable = true;
-        input.placeholder = 'Try a + b';
+    _createWrapper() {
+        this.wrapper = document.createElement('div');
+        this.wrapper.classList.add(KatexEditor.cssClass.wrapper);
+    }
+
+    _createEditor() {
+        this.editor = document.createElement('div');
+        this.editor.contentEditable = true;
+        this.editor.placeholder = 'Try a + b';
         if (this.data.tex.length === 0) {
-
+            // create new block
         } else {
-            input.innerHTML = this.data.tex;
-            input.classList.add('aff-is-hidden');
+            this.editor.innerHTML = this.data.tex;
+            this.editor.classList.add('aff-is-hidden');
         }
-        input.addEventListener('keyup', this._updateOutput);
-        input.addEventListener('blur', function (e) {
-            // Fire on Enter
-            console.log(e)
-        });
+        this.api.listeners.on(this.editor, 'keyup', this._updateOutput);
+        this.api.listeners.on(this.editor, 'blur', (e) => {
+            console.log('Editor bluring...');
+            this.editor.hidden = true;
+        }, false);
+    }
 
-        return input;
-
+    _createViewer() {
+        this.viewer = document.createElement('div');
+        //this.viewer.id = 'vie';
+        this.api.listeners.on(this.viewer, 'click', () => {
+            console.log('Editor clicking...');
+            this.editor.hidden = false;
+            this.editor.focus();
+        }, false);
     }
 
     _updateOutput(e) {
+        const opt = {
+            throwOnError: false,
+            displayMode: false,
+            output: 'html'
+        };
         const tex = e.target.innerText;
-        const html = (!!tex) ? katex.renderToString(String.raw(tex), {throwOnError: false}) : 'No data';
-        console.log(html)
+        const output = e.target.nextElementSibling;
+        /*const html = (!!tex) ? katex.renderToString(String.raw`${tex}`, opt) : 'No data';
+        output.innerHTML = html;*/
+        try {
+            katex.render(tex, output, opt);
+        } catch (e) {
+            console.log('Error katex nih')
+        }
     }
 
     _toHTML(tex) {
