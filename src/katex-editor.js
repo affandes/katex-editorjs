@@ -1,5 +1,6 @@
-import katex from "katex";
-import './style.css'
+const katex = require("katex");
+import "katex/dist/katex.css"
+import "./style.css"
 
 
 /**
@@ -15,7 +16,7 @@ import './style.css'
  * @property {string} delimiter - Delimiter string
  *
  */
-export default class KatexEditor {
+class KatexEditor {
     /**
      * Create new plugin and initiate data
      *
@@ -29,7 +30,15 @@ export default class KatexEditor {
             tex: ''
         };
         this.config = {
-            delimiter: '$$'
+            delimiter: '$$',
+            placeholder: 'Type here...',
+            throwOnError: false,
+            displayMode: true,
+            leqno: false,
+            fleqn: true,
+            output: 'html',
+            emptyEditMode: 'Try x+y',
+            emptyViewMode: 'Click here to type your equation...'
         };
         this.wrapper = null;
         this.editor = null;
@@ -58,57 +67,59 @@ export default class KatexEditor {
         // Setup viewer
         this._createViewer();
 
-        this.wrapper.innerHTML = '';
         this.wrapper.appendChild(this.editor);
         this.wrapper.appendChild(this.viewer);
     }
 
     _createWrapper() {
         this.wrapper = document.createElement('div');
-        this.wrapper.classList.add(KatexEditor.cssClass.wrapper);
+        this.wrapper.classList.add(KatexEditor.CLASS.wrapper);
     }
 
     _createEditor() {
         this.editor = document.createElement('div');
         this.editor.contentEditable = true;
-        this.editor.placeholder = 'Try a + b';
-        if (this.data.tex.length === 0) {
-            // create new block
-        } else {
-            this.editor.innerHTML = this.data.tex;
-            this.editor.classList.add('aff-is-hidden');
-        }
-        this.api.listeners.on(this.editor, 'keyup', this._updateOutput);
-        this.api.listeners.on(this.editor, 'blur', (e) => {
-            console.log('Editor bluring...');
+        this.editor.placeholder = this.config.placeholder;
+        this.editor.innerHTML = this.data.tex;
+        this.editor.classList.add(KatexEditor.CLASS.editor);
+
+        if (!!this.data.tex) {
             this.editor.hidden = true;
+        }
+
+        this.api.listeners.on(this.editor, 'input', () => {
+            this._updateViewer();
+        }, false);
+        this.api.listeners.on(this.editor, 'blur', (e) => {
+            this.editor.hidden = true;
+            this._updateViewer();
         }, false);
     }
 
     _createViewer() {
         this.viewer = document.createElement('div');
-        //this.viewer.id = 'vie';
+        this.viewer.classList.add(KatexEditor.CLASS.viewer);
+        this._updateViewer();
         this.api.listeners.on(this.viewer, 'click', () => {
-            console.log('Editor clicking...');
             this.editor.hidden = false;
             this.editor.focus();
+            this._updateViewer();
         }, false);
     }
 
-    _updateOutput(e) {
-        const opt = {
-            throwOnError: false,
-            displayMode: false,
-            output: 'html'
-        };
-        const tex = e.target.innerText;
-        const output = e.target.nextElementSibling;
-        /*const html = (!!tex) ? katex.renderToString(String.raw`${tex}`, opt) : 'No data';
-        output.innerHTML = html;*/
-        try {
-            katex.render(tex, output, opt);
-        } catch (e) {
-            console.log('Error katex nih')
+    _updateViewer() {
+        if (this.editor.textContent.length > 0) {
+            katex.render(this.editor.textContent, this.viewer, this.config);
+        } else {
+            this.viewer.innerHTML = '';
+            let info = document.createElement('SPAN');
+            info.classList.add(KatexEditor.CLASS.info);
+            if (this.editor.hidden) {
+                info.innerText = this.config.emptyViewMode
+            } else {
+                info.innerText = this.config.emptyEditMode
+            }
+            this.viewer.appendChild(info);
         }
     }
 
@@ -125,7 +136,7 @@ export default class KatexEditor {
 
     save(content) {
         return {
-            tex: content.trim()
+            tex: this.editor.textContent.trim()
         }
     }
 
@@ -136,11 +147,14 @@ export default class KatexEditor {
         };
     }
 
-    static get cssClass() {
+    static get CLASS() {
         return {
             wrapper: 'aff-katex-wrapper',
-            input: 'aff-katex-input',
-            output: 'aff-katex-output'
+            editor: 'aff-katex-editor',
+            viewer: 'aff-katex-viewer',
+            info: 'aff-katex-viewer-info'
         };
     }
 }
+
+export default KatexEditor;

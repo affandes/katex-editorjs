@@ -1,6 +1,6 @@
 {
   "name": "katex-editorjs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "EditorJs plugin for Katex",
   "main": "dist/katex-editor.js",
   "repository": "https://github.com/affandes/katex-editorjs.git",
@@ -19,19 +19,18 @@
   "devDependencies": {
     "@babel/core": "^7.7.7",
     "@babel/preset-env": "^7.7.7",
-    "babel-jest": "^24.9.0",
     "babel-loader": "^8.0.6",
     "css-loader": "^3.4.0",
-    "jest": "^24.9.0",
+    "file-loader": "^5.0.2",
     "style-loader": "^1.1.2",
     "webpack": "^4.41.5",
     "webpack-cli": "^3.3.10",
     "webpack-dev-server": "^3.10.1"
   },
   "scripts": {
-    "test": "jest",
-    "dev": "webpack --mode=development ",
-    "build": "webpack --mode=production --output-filename=katex-editor.min.js",
+    "test": "webpack --config webpack-demo.config.js",
+    "dev": "webpack ",
+    "build": "webpack --config webpack-prod.config.js",
     "start": "webpack-dev-server --open"
   },
   "dependencies": {

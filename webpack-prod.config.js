@@ -1,12 +1,11 @@
 const path = require("path");
 
 module.exports = {
-    mode: "development",
+    mode: "production",
     entry: "./src/katex-editor.js",
     output: {
-        umdNamedDefine: true,
         path: path.resolve(__dirname, "dist"),
-        filename: "katex-editor.js",
+        filename: "katex-editor.min.js",
         library: "KatexEditor",
         libraryTarget: "umd"
     },
