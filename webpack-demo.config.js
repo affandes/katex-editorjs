@@ -2,12 +2,10 @@ const path = require("path");
 
 module.exports = {
     mode: "development",
-    entry: "./src/katex-editor.js",
+    entry: "./src/demo.js",
     output: {
-        umdNamedDefine: true,
-        path: path.resolve(__dirname, "dist"),
-        filename: "katex-editor.js",
-        library: "KatexEditor",
+        path: path.resolve(__dirname, "app"),
+        filename: "demo.js",
         libraryTarget: "umd"
     },
     module: {
@@ -30,15 +28,21 @@ module.exports = {
                     "style-loader",
                     "css-loader",
                 ]
+            },
+            {
+                test: /\.(woff(2)?|ttf|eot|svg)(\?v=\d+\.\d+\.\d+)?$/,
+                use: [
+                    {
+                        loader: "file-loader",
+                        options: {
+                            name: '[name].[ext]',
+                            outputPath: 'fonts/'
+                        }
+                    }
+                ]
             }
         ]
     },
-    externals: [
-        "katex",
-        /^katex\/.+$/,
-    ],
+    externals: [],
     devtool: "inline-source-map",
-    devServer: {
-        contentBase: path.join(__dirname, "app")
-    }
 };

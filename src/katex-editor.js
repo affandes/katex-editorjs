@@ -1,5 +1,6 @@
-import katex from "katex";
-import './style.css'
+const katex = require("katex");
+import "katex/dist/katex.css"
+import "./style.css"
 
 
 /**
@@ -15,7 +16,7 @@ import './style.css'
  * @property {string} delimiter - Delimiter string
  *
  */
-export default class KatexEditor {
+class KatexEditor {
     /**
      * Create new plugin and initiate data
      *
@@ -29,9 +30,19 @@ export default class KatexEditor {
             tex: ''
         };
         this.config = {
-            delimiter: '$$'
+            delimiter: '$$',
+            placeholder: 'Type here...',
+            throwOnError: false,
+            displayMode: true,
+            leqno: false,
+            fleqn: true,
+            output: 'html',
+            emptyEditMode: 'Try x+y',
+            emptyViewMode: 'Click here to type your equation...'
         };
         this.wrapper = null;
+        this.editor = null;
+        this.viewer = null;
 
         Object.assign(this.data, data);
         Object.assign(this.config, config);
@@ -39,53 +50,77 @@ export default class KatexEditor {
 
     render() {
 
-        this._setupView();
+        this._setup();
 
         return this.wrapper
 
     }
 
-    _setupView() {
+    _setup() {
+
         // Setup wrapper
+        this._createWrapper();
+
+        // Setup editor
+        this._createEditor();
+
+        // Setup viewer
+        this._createViewer();
+
+        this.wrapper.appendChild(this.editor);
+        this.wrapper.appendChild(this.viewer);
+    }
+
+    _createWrapper() {
         this.wrapper = document.createElement('div');
-        this.wrapper.classList.add(KatexEditor.cssClass.wrapper);
-
-        // Setup input
-        const input = this._createInput();
-
-        // Setup ouput
-        const output = document.createElement('div');
-        output.innerHTML = 'Output: ' + this.data.tex;
-
-        this.wrapper.innerHTML = '';
-        this.wrapper.appendChild(input);
-        this.wrapper.appendChild(output);
+        this.wrapper.classList.add(KatexEditor.CLASS.wrapper);
     }
 
-    _createInput() {
-        const input = document.createElement('div');
-        input.contentEditable = true;
-        input.placeholder = 'Try a + b';
-        if (this.data.tex.length === 0) {
+    _createEditor() {
+        this.editor = document.createElement('div');
+        this.editor.contentEditable = true;
+        this.editor.placeholder = this.config.placeholder;
+        this.editor.innerHTML = this.data.tex;
+        this.editor.classList.add(KatexEditor.CLASS.editor);
 
-        } else {
-            input.innerHTML = this.data.tex;
-            input.classList.add('aff-is-hidden');
+        if (!!this.data.tex) {
+            this.editor.hidden = true;
         }
-        input.addEventListener('keyup', this._updateOutput);
-        input.addEventListener('blur', function (e) {
-            // Fire on Enter
-            console.log(e)
-        });
 
-        return input;
-
+        this.api.listeners.on(this.editor, 'input', () => {
+            this._updateViewer();
+        }, false);
+        this.api.listeners.on(this.editor, 'blur', (e) => {
+            this.editor.hidden = true;
+            this._updateViewer();
+        }, false);
     }
 
-    _updateOutput(e) {
-        const tex = e.target.innerText;
-        const html = (!!tex) ? katex.renderToString(String.raw(tex), {throwOnError: false}) : 'No data';
-        console.log(html)
+    _createViewer() {
+        this.viewer = document.createElement('div');
+        this.viewer.classList.add(KatexEditor.CLASS.viewer);
+        this._updateViewer();
+        this.api.listeners.on(this.viewer, 'click', () => {
+            this.editor.hidden = false;
+            this.editor.focus();
+            this._updateViewer();
+        }, false);
+    }
+
+    _updateViewer() {
+        if (this.editor.textContent.length > 0) {
+            katex.render(this.editor.textContent, this.viewer, this.config);
+        } else {
+            this.viewer.innerHTML = '';
+            let info = document.createElement('SPAN');
+            info.classList.add(KatexEditor.CLASS.info);
+            if (this.editor.hidden) {
+                info.innerText = this.config.emptyViewMode
+            } else {
+                info.innerText = this.config.emptyEditMode
+            }
+            this.viewer.appendChild(info);
+        }
     }
 
     _toHTML(tex) {
@@ -101,7 +136,7 @@ export default class KatexEditor {
 
     save(content) {
         return {
-            tex: content.trim()
+            tex: this.editor.textContent.trim()
         }
     }
 
@@ -112,11 +147,14 @@ export default class KatexEditor {
         };
     }
 
-    static get cssClass() {
+    static get CLASS() {
         return {
             wrapper: 'aff-katex-wrapper',
-            input: 'aff-katex-input',
-            output: 'aff-katex-output'
+            editor: 'aff-katex-editor',
+            viewer: 'aff-katex-viewer',
+            info: 'aff-katex-viewer-info'
         };
     }
 }
+
+export default KatexEditor;
