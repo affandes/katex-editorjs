@@ -1,6 +1,6 @@
 {
   "name": "katex-editorjs",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "EditorJs plugin for Katex",
   "main": "dist/katex-editor.js",
   "repository": "https://github.com/affandes/katex-editorjs.git",
@@ -10,7 +10,8 @@
   "keywords": [
     "editorjs",
     "katex",
-    "plugin"
+    "plugin",
+    "math"
   ],
   "files": [
     "dist",
